@@ -349,6 +349,7 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
             s.check_attempt as current_check_attempt,
             s.max_check_attempts,
             s.last_state_change,
+            s.last_hard_state,
             s.last_hard_state_change,
             s.acknowledged as problem_has_been_acknowledged,
             d.start_time as downtime_start,
