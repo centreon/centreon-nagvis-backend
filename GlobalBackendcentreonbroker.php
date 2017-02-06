@@ -926,3 +926,4 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
         }
     }
 }
+?>
