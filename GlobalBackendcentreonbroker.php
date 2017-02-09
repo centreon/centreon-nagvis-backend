@@ -412,7 +412,7 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
             unset($row['host_id']);
 
             /* Unchecked state */
-            if ($row['has_been_checked'] == '0' || $row['current_state'] == '') {
+            if (isset($e) && $row['has_been_checked'] == '0' || $row['current_state'] == '') {
                 $svc = array_fill(0, EXT_STATE_SIZE, null);
                 $svc[DESCRIPTION]  = $e[0];
                 $svc[DISPLAY_NAME] = $e[1];
@@ -553,7 +553,7 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
         }
         $queryCount = 'SELECT
             hg.name,
-            hg.alias,
+            hg.name as alias,
             SUM(IF(h.checked=0,1,0)) AS unchecked,
             SUM(IF(('.$stateAttr.'=0 AND h.checked!=0 AND h.scheduled_downtime_depth=0),1,0)) AS up,
             SUM(IF(('.$stateAttr.'=0 AND h.checked!=0 AND h.scheduled_downtime_depth!=0),1,0)) AS up_downtime,
@@ -619,7 +619,7 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
         }
         $queryCount = 'SELECT
             hg.name,
-            hg.alias,
+            hg.name as alias,
             SUM(IF(s.checked=0,1,0)) AS pending,
             SUM(IF(('.$stateAttr.'=0 AND s.checked!=0 AND s.scheduled_downtime_depth=0),1,0)) AS ok,
             SUM(IF(('.$stateAttr.'=0 AND s.checked!=0 AND s.scheduled_downtime_depth!=0),1,0)) AS ok_downtime,
@@ -676,7 +676,7 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
         }
         $queryCount = 'SELECT
             sg.name,
-            sg.alias,
+            sg.name as alias,
             SUM(IF(s.checked=0,1,0)) AS pending,
             SUM(IF(('.$stateAttr.'=0 AND s.checked!=0 AND s.scheduled_downtime_depth=0),1,0)) AS ok,
             SUM(IF(('.$stateAttr.'=0 AND s.checked!=0 AND s.scheduled_downtime_depth!=0),1,0)) AS ok_downtime,
@@ -925,4 +925,8 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
             $this->_instanceId = $row['instance_id'];
         }
     }
+    
+    public function getProgramStart() {
+      return -1;
+     }
 }
