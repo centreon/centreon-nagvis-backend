@@ -134,7 +134,7 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
                 }
                 break;
             case 'service':
-                $queryGetObject = 'SELECT s.host_id, s.service_id, h.name as name1, s.description as name2
+                $queryGetObject = 'SELECT s.host_id, s.service_id, s.description as name1, s.description as name2
                     FROM services s, hosts h
                     WHERE h.enabled =1
                         AND s.enabled = 1
@@ -220,7 +220,6 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
             h.check_attempt as current_check_attempt,
             h.max_check_attempts,
             h.last_state_change,
-            h.last_hard_state,
             h.last_hard_state_change,
             h.checked as has_been_checked,
             h.state as current_state,
@@ -349,7 +348,6 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
             s.check_attempt as current_check_attempt,
             s.max_check_attempts,
             s.last_state_change,
-            s.last_hard_state,
             s.last_hard_state_change,
             s.acknowledged as problem_has_been_acknowledged,
             d.start_time as downtime_start,
@@ -407,15 +405,15 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
             }
             /* Get host ack */
             if ($row['problem_has_been_acknowledged'] != 1) {
-                $row['problem_has_been_acknowledged'] = $this->getHostAckByHost($row['host_id']);
+                // $row['problem_has_been_acknowledged'] = $this->getHostAckByHost($row['host_id']); // FIXME ?
             }
             unset($row['host_id']);
 
             /* Unchecked state */
             if ($row['has_been_checked'] == '0' || $row['current_state'] == '') {
                 $svc = array_fill(0, EXT_STATE_SIZE, null);
-                $svc[DESCRIPTION]  = $e[0];
-                $svc[DISPLAY_NAME] = $e[1];
+                $svc[DESCRIPTION]  = $row['service_description'];
+                $svc[DISPLAY_NAME] = $row['display_name'];
                 $svc[STATE]  = PENDING;
                 $svc[OUTPUT] = l('serviceNotChecked', Array('SERVICE' => $row['service_description']));
             } else {
@@ -553,7 +551,6 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
         }
         $queryCount = 'SELECT
             hg.name,
-            hg.alias,
             SUM(IF(h.checked=0,1,0)) AS unchecked,
             SUM(IF(('.$stateAttr.'=0 AND h.checked!=0 AND h.scheduled_downtime_depth=0),1,0)) AS up,
             SUM(IF(('.$stateAttr.'=0 AND h.checked!=0 AND h.scheduled_downtime_depth!=0),1,0)) AS up_downtime,
@@ -586,7 +583,7 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
         $counts = array();
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $counts[$row['name']] = array(
-                'details' => array(ALIAS => $row['alias']),
+                'details' => array(),
                 'counts' => array(
                     UNCHECKED => array(
                         'normal'    => intval($row['unchecked']),
@@ -619,7 +616,6 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
         }
         $queryCount = 'SELECT
             hg.name,
-            hg.alias,
             SUM(IF(s.checked=0,1,0)) AS pending,
             SUM(IF(('.$stateAttr.'=0 AND s.checked!=0 AND s.scheduled_downtime_depth=0),1,0)) AS ok,
             SUM(IF(('.$stateAttr.'=0 AND s.checked!=0 AND s.scheduled_downtime_depth!=0),1,0)) AS ok_downtime,
@@ -676,7 +672,6 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
         }
         $queryCount = 'SELECT
             sg.name,
-            sg.alias,
             SUM(IF(s.checked=0,1,0)) AS pending,
             SUM(IF(('.$stateAttr.'=0 AND s.checked!=0 AND s.scheduled_downtime_depth=0),1,0)) AS ok,
             SUM(IF(('.$stateAttr.'=0 AND s.checked!=0 AND s.scheduled_downtime_depth!=0),1,0)) AS ok_downtime,
@@ -705,7 +700,7 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
         $counts = array();
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $counts[$row['name']] = array(
-                'details' => array(ALIAS => $row['alias']),
+                'details' => array(),
                 'counts' => array(
                     PENDING => array(
                         'normal'   => intval($row['pending']),
