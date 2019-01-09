@@ -884,7 +884,7 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
      * @throws BackendConnectionProblem
      */
     private function connectToDb() {
-        if (false === extension_loaded('mysql')) {
+        if (false === extension_loaded('mysql') && false === extension_loaded('pdo_mysql')) {
             throw new BackendConnectionProblem(l('mysqlNotSupported', array('BACKENDID', $this->_backendId)));
         }
         $fullhost = 'host=' . $this->_dbhost;
