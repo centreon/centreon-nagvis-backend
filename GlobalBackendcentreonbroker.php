@@ -330,6 +330,14 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
     }
 
     public function getServiceState($objects, $options, $filters) {
+        $sg = '';
+        if (isset($filters[0]['key']) && $filters[0]['key'] == "service_groups"){
+            $sg = '
+                RIGHT JOIN services_servicegroups ssg ON ssg.service_id=s.service_id
+                LEFT JOIN servicegroups sg ON ssg.servicegroup_id=sg.servicegroup_id
+            ';
+        }
+        
         $queryGetServiceState = 'SELECT
             h.host_id,
             h.name,
@@ -360,8 +368,9 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
             LEFT JOIN hosts h
                 ON s.host_id=h.host_id
             LEFT JOIN downtimes d 
-                ON (d.host_id = h.host_id AND d.service_id=s.service_id AND d.start_time < UNIX_TIMESTAMP() AND d.end_time > UNIX_TIMESTAMP() AND d.deletion_time IS NULL)
-            WHERE (d.downtime_id IS NULL OR d.downtime_id IN (
+                ON (d.host_id = h.host_id AND d.service_id=s.service_id AND d.start_time < UNIX_TIMESTAMP() AND d.end_time > UNIX_TIMESTAMP() AND d.deletion_time IS NULL)'.
+            $sg .
+            'WHERE (d.downtime_id IS NULL OR d.downtime_id IN (
                             SELECT MAX(d.downtime_id) as downtime_id
                                 FROM downtimes d where d.host_id = h.host_id AND d.service_id = s.service_id AND d.start_time < UNIX_TIMESTAMP() AND d.end_time > UNIX_TIMESTAMP() AND d.deletion_time IS NULL
                             ) 
@@ -371,7 +380,12 @@ class GlobalBackendcentreonbroker implements GlobalBackendInterface {
         if ($this->_instanceId != 0) {
             $queryGetServiceState .= ' AND h.instance_id = ' . $this->_instanceId;
         }
-        $queryGetServiceState = sprintf($queryGetServiceState, $this->parseFilter($objects, $filters));
+        
+        if (isset($filters[0]['key']) && $filters[0]['key'] == "service_groups"){
+            $queryGetServiceState = sprintf($queryGetServiceState, $this->parseFilter($objects, $filters, 'sg'));
+        } else {
+            $queryGetServiceState = sprintf($queryGetServiceState, $this->parseFilter($objects, $filters));
+        }
 
         try {
             $stmt = $this->_dbh->query($queryGetServiceState);
